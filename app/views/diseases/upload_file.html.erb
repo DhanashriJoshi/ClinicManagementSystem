@@ -1,0 +1,14 @@
+<p id="notice"><%= notice %></p>
+
+<%= form_tag({action: :upload}, multipart: true) do %>
+  <div class="container">
+    <h1>Upload List of Diseases</h1>
+    <p>Please upload xls or csv file to create the diseases.</p>
+    <hr>
+
+    <label for="file"><b>Upload Your File here</b></label>
+    <%= file_field_tag :disease_file %>
+    <br/>
+    <button type="submit" class="uploadbtn">Import</button>
+  </div>
+<% end %>
