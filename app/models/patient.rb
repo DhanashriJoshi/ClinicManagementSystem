@@ -1,10 +1,10 @@
 class Patient < ApplicationRecord
   validates :name, :birth_date, presence: true
   validates_length_of :address, maximum: 50
-  # validate :validate_age
   has_and_belongs_to_many :diseases
   has_many :appointments
   has_many :doctors, through: :appointments
+  has_many :treatments, through: :appointments
 
   after_create :store_age
   after_update :store_age
@@ -23,11 +23,16 @@ class Patient < ApplicationRecord
     (Time.zone.now.year - birth_date.year)
   end
 
-  # private
+  # Patients attended for the given timespan / for specific disease
+  def self.patients_attented_for_timespan_for_disease(start_date, end_date, disease_name)
+    flag = ((start_date.is_a?Date) && (end_date.is_a?Date))
+    Patient.joins(appointments: :disease).where(appointments: {date: start_date..end_date}).where("diseases.name LIKE ?", "%#{disease_name}%").uniq if flag
+  end
 
-  # def validate_age
-  #   if birth_date.present? && birth_date > 18.years.ago.to_d
-  #     errors.add(:birth_date, 'You should be over 18 years old.')
-  #   end
-  # end
+  # Treatment given to a specific patient for a specific disease
+  def treatment_for_disease(disease_name='')
+    if disease_name.present?
+      self.treatments.joins(:disease).where("diseases.name LIKE ?", "%#{disease_name}%")
+    end
+  end
 end

@@ -1,5 +1,6 @@
 FactoryBot.define do
   factory :doctor do
-    name { "MyString" }
+    name { Faker::Name.name }
+    speciality { 'Cancer' }
   end
 end

@@ -41,6 +41,47 @@ RSpec.describe Disease, type: :model do
     end
   end
 
+  describe '.min_age_of_patient_suffering_from_specific_disease' do
+    context 'returns minimum age of patient suffering from specific diseases' do
+      it 'when valid disease name is present' do
+        expect(Disease.min_age_of_patient_suffering_from_specific_disease('Fatigue')).to eq(31)
+      end
+
+      it 'when invalid disease name is present' do
+        expect(Disease.min_age_of_patient_suffering_from_specific_disease('fatigue')).to be_nil
+      end
+
+      it 'when disease name is not present' do
+        expect(Disease.min_age_of_patient_suffering_from_specific_disease('')).to be_nil
+      end
+    end
+  end
+
+  describe '.doctors_treating_patients_for_given_disease' do
+    context 'returns array of doctors' do
+      it 'when valid disease name is present' do
+        expect(Disease.doctors_treating_patients_for_given_disease('Cancer').count).to eq(1)
+      end
+
+      it 'when disease name is not present in the database' do
+        expect(Disease.min_age_of_patient_suffering_from_specific_disease('fatigue')).to be_nil
+      end
+
+      it 'when disease name is not present' do
+        expect(Disease.min_age_of_patient_suffering_from_specific_disease(nil)).to be_nil
+      end
+    end
+  end
+
+  describe '.frequently_treated_diseases' do
+    context 'returns hash of Diseases paired with its frequency' do
+      it 'when the method is called on class Disease' do
+        resp_hash = { "Cancer" => 3, "Fatigue" => 2, "Diabetes" => 1 }
+        expect(Disease.frequently_treated_diseases).to eq(resp_hash)
+      end
+    end
+  end
+
   context 'validation tests' do
     it { should validate_presence_of(:name) }
     it { should validate_presence_of(:symptons) }

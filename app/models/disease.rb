@@ -4,6 +4,26 @@ class Disease < ApplicationRecord
   has_and_belongs_to_many :patients
   has_many :appointments
   has_many :doctors, through: :appointments
+  has_many :diseases
+  has_many :treatments
+
+  def self.min_age_of_patient_suffering_from_specific_disease(disease_name='')
+    if disease_name.present?
+      disease = self.find_by_name(disease_name)
+      disease.patients.minimum(:age) if disease.present?
+    end
+  end
+
+  def self.doctors_treating_patients_for_given_disease(disease_name="")
+    if disease_name.present?
+      disease = self.find_by_name(disease_name)
+      disease.doctors.select('doctors.name as doctor_name, speciality as speciality').as_json.uniq if disease.present?
+    end
+  end
+
+  def self.frequently_treated_diseases
+    Disease.joins(:appointments).group('diseases.name').order('count(appointments.id) desc').references(:appointments).count
+  end
 
   def self.import_diseases(file_path)
     error_report, success_flag, error_file = [], true, nil
@@ -76,13 +96,5 @@ class Disease < ApplicationRecord
     blob = StringIO.new('')
     book.write blob
     blob.string
-  end
-
-  def self.min_age_of_patient_suffering_from_specific_disease(disease_name='')
-    if disease_name.present?
-      disease = self.find_by_name(disease_name)
-     # Disease.first.patients.having('min(age) >= 15').group(:birth_date).minimum(:age)
-      disease.patients.minimum(:age)
-    end
   end
 end
