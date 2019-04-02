@@ -26,31 +26,34 @@ class Disease < ApplicationRecord
   end
 
   def self.import_diseases(file_path)
-    error_report, success_flag, error_file = [], true, nil
+    error_report, success_flag, error_file, notification_message = [], true, nil, ''
     file = Roo::Spreadsheet.open(file_path)
     diseases_sheet = file.sheet(0)
-
     diseases_sheet.each_with_index do |row, index|
       tmp_arr = row
       tmp_arr << ''
       begin
-        if index.zero? # row(0) consists of Headers
-          tmp_arr << 'Please Find the errors below'
-          error_report << tmp_arr
-          next
+        expected_headers = Disease.diseases_import_file_headers
+        if  index.zero?
+          if ((expected_headers & row) == expected_headers) # 0th row consists of Headers
+            tmp_arr << 'Please Find the errors below'
+            error_report << tmp_arr
+            next
+          else
+            success_flag, error_file, notification_message = false, nil, 'Invalid Format of Data in the uploaded file'
+            return success_flag, error_file, notification_message
+          end
         end
 
         error_messages = check_if_row_is_valid(row)
-        unless error_messages.present?
-          Disease.create!(to_diseases_obj(row))
-        else
+        if error_messages.present?
           tmp_arr << error_messages
           error_report << tmp_arr
           next
+        else
+          Disease.create!(to_diseases_obj(row))
         end
       rescue Exception => e
-        ap e.message
-        ap e.backtrace
         tmp_arr << e.message
         error_report << tmp_arr
         next
@@ -59,10 +62,11 @@ class Disease < ApplicationRecord
 
     if error_report.present? && (error_report.length > 1)
       success_flag = false
+      notification_message = 'There are errors in the uploaded File'
       error_file = create_disease_error_report(error_report)
     end
 
-    return success_flag, error_file
+    return success_flag, error_file, notification_message
   end
 
   def self.to_diseases_obj(row)
@@ -82,7 +86,6 @@ class Disease < ApplicationRecord
     if row[1].blank?
       error_messages << 'Disease Symptons are Mandatory'
     end
-
     msgs = error_messages.join(', ') if error_messages.present?
     msgs
   end
@@ -96,5 +99,9 @@ class Disease < ApplicationRecord
     blob = StringIO.new('')
     book.write blob
     blob.string
+  end
+
+  def self.diseases_import_file_headers
+    ['Name', 'Symptons']
   end
 end

@@ -67,4 +67,39 @@ RSpec.describe Patient, type: :model do
       end
     end
   end
+
+  describe '.treatment_for_disease' do
+    context 'returns array of treatments' do
+      patient = Patient.find_by_id(3)
+      it 'when valid disease name is present' do
+        expect(patient.treatment_for_disease('Cancer').count).to eq(1)
+      end
+
+      it 'when disease name is not present in the database' do
+        expect(patient.treatment_for_disease('cancer')).to eq([])
+      end
+
+      it 'when disease name is not present' do
+        expect(patient.treatment_for_disease(nil)).to be_nil
+      end
+    end
+  end
+
+  describe '.treatment_for_disease' do
+    context 'returns array of patients history based on appointments' do
+      it 'when history is present' do
+        patient = Patient.find_by_id(3)
+        response = patient.patients_history
+        expect(response.count).to eq(2)
+          expect(response).to be_kind_of(Array)
+      end
+
+      it 'when history is not present' do
+        patient = Patient.find_by_id(2)
+        response = patient.patients_history
+        expect(response.count).to eq(0)
+        expect(response).to be_kind_of(Array)
+      end
+    end
+  end
 end

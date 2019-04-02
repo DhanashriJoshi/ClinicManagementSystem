@@ -8,6 +8,31 @@ RSpec.describe Disease, type: :model do
     end
   end
 
+  describe '.import_diseases' do
+    context 'returns array' do
+      common_path = "#{Rails.root}/spec/factories"
+      it 'when there is a valid file_path' do
+        disease_file_path = "#{common_path}/Diseases_new.xlsx"
+        resp_obj = [true, nil, '']
+        expect(Disease.import_diseases(disease_file_path)).to eq(resp_obj)
+      end
+
+      it 'when there is a invalid file_path' do
+        disease_file_path = "#{common_path}/Diseases_invalid_data.xlsx"
+        expect(Disease.import_diseases(disease_file_path)[0]).to be_falsy
+        expect(Disease.import_diseases(disease_file_path)[1]).to be_kind_of(String)
+        expect(Disease.import_diseases(disease_file_path)[2]).to eq('There are errors in the uploaded File')
+      end
+
+      it 'when there is a file with invalid file format' do
+        disease_file_path = "#{common_path}/Diseases_blank_header.xlsx"
+        expect(Disease.import_diseases(disease_file_path)[0]).to be_falsy
+        expect(Disease.import_diseases(disease_file_path)[1]).to be_nil
+        expect(Disease.import_diseases(disease_file_path)[2]).to eq('Invalid Format of Data in the uploaded file')
+      end
+    end
+  end
+
   describe '.check_if_row_is_valid' do
     context 'validate the row' do
       it 'when there is row' do
@@ -27,7 +52,7 @@ RSpec.describe Disease, type: :model do
 
       it 'when the name and symptoms are blank' do
         row = ['', '']
-        expect(Disease.check_if_row_is_valid(row)).to eq('Disease Name is Mandatory, Disease Symptons are Mandatory')
+        expect(Disease.check_if_row_is_valid(row)).to include 'Disease Name is Mandatory, Disease Symptons are Mandatory'
       end
     end
   end
@@ -76,7 +101,7 @@ RSpec.describe Disease, type: :model do
   describe '.frequently_treated_diseases' do
     context 'returns hash of Diseases paired with its frequency' do
       it 'when the method is called on class Disease' do
-        resp_hash = { "Cancer" => 3, "Fatigue" => 2, "Diabetes" => 1 }
+        resp_hash = {"Cancer"=>3, "Diabetes"=>4, "Fatigue"=>2, "Fever"=>1}
         expect(Disease.frequently_treated_diseases).to eq(resp_hash)
       end
     end

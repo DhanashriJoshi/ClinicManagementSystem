@@ -35,4 +35,9 @@ class Patient < ApplicationRecord
       self.treatments.joins(:disease).where("diseases.name LIKE ?", "%#{disease_name}%")
     end
   end
+
+  def patients_history
+    patient = self
+    Patient.where(id: patient.try(:id)).joins(appointments: [:treatment, :disease, :doctor]).select('patients.name as patient_name, treatments.description, diseases.name, doctors.name, appointments.date, appointments.time').as_json
+  end
 end
