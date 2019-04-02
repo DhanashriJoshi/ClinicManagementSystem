@@ -7,4 +7,11 @@ RSpec.describe "Diseases", type: :request do
       expect(response).to have_http_status(200)
     end
   end
+
+  describe "GET /diseases/upload_file" do
+    it "upload_file route" do
+      get upload_file_diseases_path
+      expect(response).to have_http_status(200)
+    end
+  end
 end

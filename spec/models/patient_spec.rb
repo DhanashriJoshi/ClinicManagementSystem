@@ -98,7 +98,6 @@ RSpec.describe Patient, type: :model do
         patient = Patient.find_by_id(2)
         response = patient.patients_history
         expect(response.count).to eq(0)
-        expect(response).to be_kind_of(Array)
       end
     end
   end
