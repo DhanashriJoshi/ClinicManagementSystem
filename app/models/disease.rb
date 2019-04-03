@@ -25,48 +25,74 @@ class Disease < ApplicationRecord
     Disease.joins(:appointments).group('diseases.name').order('count(appointments.id) desc').references(:appointments).count
   end
 
-  def self.import_diseases(file_path)
+  def self.import_diseases(file, file_extention=nil)
     error_report, success_flag, error_file, notification_message = [], true, nil, ''
-    file = Roo::Spreadsheet.open(file_path)
-    diseases_sheet = file.sheet(0)
-    diseases_sheet.each_with_index do |row, index|
-      tmp_arr = row
-      tmp_arr << ''
-      begin
-        expected_headers = Disease.diseases_import_file_headers
-        if  index.zero?
-          if ((expected_headers & row) == expected_headers) # 0th row consists of Headers
-            tmp_arr << 'Please Find the errors below'
+    diseases_sheet = open_spreadsheet(file, file_extention)
+    if ((diseases_sheet.is_a?String) && (diseases_sheet.include?'Unknown file type'))
+      success_flag, error_file, notification_message = false, nil, diseases_sheet
+      return success_flag, error_file, notification_message
+    else
+      diseases_sheet.each_with_index do |row, index|
+        row.compact.present?
+        tmp_arr = row
+        tmp_arr << ''
+        begin
+          expected_headers = Disease.diseases_import_file_headers
+          if  index.zero?
+            if ((expected_headers & row) == expected_headers) # 0th row consists of Headers
+              tmp_arr << 'Please Find the errors below'
+              error_report << tmp_arr
+              next
+            else
+              success_flag, error_file, notification_message = false, nil, 'Invalid Format of Data in the uploaded file'
+              return success_flag, error_file, notification_message
+            end
+          end
+
+          error_messages = check_if_row_is_valid(row)
+          if error_messages.present?
+            tmp_arr << error_messages
             error_report << tmp_arr
             next
           else
-            success_flag, error_file, notification_message = false, nil, 'Invalid Format of Data in the uploaded file'
-            return success_flag, error_file, notification_message
+            Disease.create!(to_diseases_obj(row))
           end
-        end
-
-        error_messages = check_if_row_is_valid(row)
-        if error_messages.present?
-          tmp_arr << error_messages
+        rescue Exception => e
+          tmp_arr << e.message
           error_report << tmp_arr
           next
-        else
-          Disease.create!(to_diseases_obj(row))
         end
-      rescue Exception => e
-        tmp_arr << e.message
-        error_report << tmp_arr
-        next
       end
+
+      if error_report.present? && (error_report.length > 1)
+        success_flag = false
+        notification_message = 'There are errors in the uploaded File'
+        error_file = create_disease_error_report(error_report)
+      end
+      return success_flag, error_file, notification_message
+    end
+  end
+
+  def self.open_spreadsheet(file, file_extention=nil)
+    if (file.is_a?String)
+      file_path = file
+      file_name = file.split('/')[-1]
+    else
+      file_path = file.path
+      file_name = file.original_filename
     end
 
-    if error_report.present? && (error_report.length > 1)
-      success_flag = false
-      notification_message = 'There are errors in the uploaded File'
-      error_file = create_disease_error_report(error_report)
-    end
+    file_extention ||= (File.extname(file.original_filename) rescue '')
 
-    return success_flag, error_file, notification_message
+    case file_extention
+    when '.csv'
+      Roo::CSV.new(file_path)
+    when '.xls', '.xlsx'
+      spreadsheet = Roo::Spreadsheet.open(file_path)
+      spreadsheet.sheet(0)
+    else
+      "Unknown file type: #{file_name}, Please Upload xls/ csv File Format"
+    end
   end
 
   def self.to_diseases_obj(row)

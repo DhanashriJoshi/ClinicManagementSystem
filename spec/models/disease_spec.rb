@@ -11,24 +11,52 @@ RSpec.describe Disease, type: :model do
   describe '.import_diseases' do
     context 'returns array' do
       common_path = "#{Rails.root}/spec/factories"
-      it 'when there is a valid file_path' do
+      it 'when there is a valid xls file_path' do
         disease_file_path = "#{common_path}/Diseases_new.xlsx"
         resp_obj = [true, nil, '']
-        expect(Disease.import_diseases(disease_file_path)).to eq(resp_obj)
+        expect(Disease.import_diseases(disease_file_path, '.xlsx')).to eq(resp_obj)
       end
 
-      it 'when there is a invalid file_path' do
+      it 'when there is a invalid xls file_path' do
         disease_file_path = "#{common_path}/Diseases_invalid_data.xlsx"
-        expect(Disease.import_diseases(disease_file_path)[0]).to be_falsy
-        expect(Disease.import_diseases(disease_file_path)[1]).to be_kind_of(String)
-        expect(Disease.import_diseases(disease_file_path)[2]).to eq('There are errors in the uploaded File')
+        expect(Disease.import_diseases(disease_file_path, '.xlsx')[0]).to be_falsy
+        expect(Disease.import_diseases(disease_file_path, '.xlsx')[1]).to be_kind_of(String)
+        expect(Disease.import_diseases(disease_file_path, '.xlsx')[2]).to eq('There are errors in the uploaded File')
       end
 
-      it 'when there is a file with invalid file format' do
+      it 'when there is a valid xls file_obj' do
+        disease_file_path = "#{common_path}/Diseases_new1.xlsx"
+        file = ActionDispatch::Http::UploadedFile.new(tempfile: disease_file_path, filename: File.basename(disease_file_path), type: "application/xlsx")
+        resp_obj = [true, nil, '']
+        expect(Disease.import_diseases(disease_file_path, '.xlsx')).to eq(resp_obj)
+      end
+
+      it 'when there is a invalid xls file obj' do
+        disease_file_path = "#{common_path}/Diseases_invalid_data.xlsx"
+        file = ActionDispatch::Http::UploadedFile.new(tempfile: disease_file_path, filename: File.basename(disease_file_path), type: "application/xlsx")
+        expect(Disease.import_diseases(disease_file_path, '.xlsx')[0]).to be_falsy
+        expect(Disease.import_diseases(disease_file_path, '.xlsx')[1]).to be_kind_of(String)
+        expect(Disease.import_diseases(disease_file_path, '.xlsx')[2]).to eq('There are errors in the uploaded File')
+      end
+
+      it 'when there is a xls file with invalid file format' do
         disease_file_path = "#{common_path}/Diseases_blank_header.xlsx"
+        expect(Disease.import_diseases(disease_file_path, '.xlsx')[0]).to be_falsy
+        expect(Disease.import_diseases(disease_file_path, '.xlsx')[1]).to be_nil
+        expect(Disease.import_diseases(disease_file_path, '.xlsx')[2]).to eq('Invalid Format of Data in the uploaded file')
+      end
+
+      it 'when there is a wrong file with file_extention other than csv / xls / xlsx' do
+        disease_file_path = "#{common_path}/wrong_file"
         expect(Disease.import_diseases(disease_file_path)[0]).to be_falsy
         expect(Disease.import_diseases(disease_file_path)[1]).to be_nil
-        expect(Disease.import_diseases(disease_file_path)[2]).to eq('Invalid Format of Data in the uploaded file')
+        expect(Disease.import_diseases(disease_file_path)[2]).to include 'Please Upload xls/ csv File Format'
+      end
+
+      it 'when there is a valid file_path of csv file' do
+        disease_file_path = "#{common_path}/Diseases_Sheet1.csv"
+        resp_obj = [true, nil, '']
+        expect(Disease.import_diseases(disease_file_path, '.csv')).to eq(resp_obj)
       end
     end
   end
@@ -101,11 +129,12 @@ RSpec.describe Disease, type: :model do
   describe '.frequently_treated_diseases' do
     context 'returns hash of Diseases paired with its frequency' do
       it 'when the method is called on class Disease' do
-        resp_hash = {"Cancer"=>3, "Diabetes"=>4, "Fatigue"=>2, "Fever"=>1}
+        resp_hash = {"Cancer"=>3, "Diabetes"=>7, "Fatigue"=>2, "Fever"=>2}
         expect(Disease.frequently_treated_diseases).to eq(resp_hash)
       end
     end
   end
+
 
   context 'validation tests' do
     it { should validate_presence_of(:name) }

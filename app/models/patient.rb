@@ -9,6 +9,7 @@ class Patient < ApplicationRecord
   after_create :store_age
   after_update :store_age
 
+
   default_scope { order(birth_date: :asc) }
 
   def self.patients_suffering_from_specific_disease(disease_name="")
