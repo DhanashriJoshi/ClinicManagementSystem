@@ -35,7 +35,7 @@ RSpec.describe Disease, type: :model do
       it 'when there is a invalid xls file obj' do
         disease_file_path = "#{common_path}/Diseases_invalid_data.xlsx"
         file = ActionDispatch::Http::UploadedFile.new(tempfile: disease_file_path, filename: File.basename(disease_file_path), type: "application/xlsx")
-        response = Disease.import_diseases(disease_file_path, '.xlsx')
+        response = Disease.import_diseases(file, '.xlsx')
         expect(response[0]).to be_falsy
         expect(response[1]).to be_kind_of(String)
         expect(response[2]).to eq('There are errors in the uploaded File')
@@ -133,7 +133,7 @@ RSpec.describe Disease, type: :model do
   describe '.frequently_treated_diseases' do
     context 'returns hash of Diseases paired with its frequency' do
       it 'when the method is called on class Disease' do
-        resp_hash = {"Cancer"=>3, "Diabetes"=>7, "Fatigue"=>2, "Fever"=>2}
+        resp_hash = {"Cancer"=>3, "Diabetes"=>13, "Fatigue"=>2, "Fever"=>4}
         expect(Disease.frequently_treated_diseases).to eq(resp_hash)
       end
     end

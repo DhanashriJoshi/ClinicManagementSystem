@@ -78,7 +78,7 @@ class Disease < ApplicationRecord
       file_path = file
       file_name = file.split('/')[-1]
     else
-      file_path = file.path
+      file_path = file.tempfile
       file_name = file.original_filename
     end
 
