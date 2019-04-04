@@ -42,7 +42,6 @@ RSpec.describe DiseasesController, type: :controller do
   let(:valid_session) { {} }
 
   before :each do
-    # allow(controller).to receive(:valid_attributes).and_return(create(:disease))
     @disease = Disease.create!({ name: Faker::Name.name, symptons: Faker::Name.name })
   end
 

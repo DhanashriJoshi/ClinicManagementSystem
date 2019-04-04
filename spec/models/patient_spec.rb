@@ -19,23 +19,32 @@ RSpec.describe Patient, type: :model do
     end
   end
 
+
+  let(:patient) { create(:patient) }
+  let(:disease_name){ patient.diseases.first.name }
+
   describe '#store_age' do
     context 'stores present age of Patient as of today' do
       it 'when valid patient is saved' do
-        patient = Patient.last
+        # patient = create(:patient)
         expect(patient.store_age).to be_truthy
       end
     end
   end
 
   describe '.patients_suffering_from_specific_disease' do
+    # let(:patient) { create(:patient) }
+    # let(:disease_name){ patient.diseases.first.name }
+
     context 'returns array of patients' do
       it 'when valid disease name is present' do
-        expect(Patient.patients_suffering_from_specific_disease('Fatigue').count).to eq(2)
+        expected_resp = patient.diseases.where(name: disease_name)
+        expect(Patient.patients_suffering_from_specific_disease(disease_name).count).to eq(expected_resp.count)
       end
 
       it 'when disease name is not present in the database' do
-        expect(Patient.patients_suffering_from_specific_disease('fatigue')).to eq([])
+        expected_resp = patient.diseases.where(name: 'dfghjk').count
+        expect(Patient.patients_suffering_from_specific_disease('dfghjk').count).to eq(expected_resp)
       end
 
       it 'when disease name is not present' do
@@ -45,19 +54,24 @@ RSpec.describe Patient, type: :model do
   end
 
   describe '.patients_attented_for_timespan_for_disease' do
+    let(:appointments) { create_list(:appointment, 3, patient_id: FactoryBot.create(:patient).id, doctor_id: FactoryBot.create(:doctor).id, disease_id:  FactoryBot.create(:disease).id) }
+    let(:disease_name) { appointments.first.disease.name }
+    let(:sorted_dates) { appointments.pluck(:date).sort }
+    let(:start_date) { sorted_dates.first }
+    let(:end_date) { sorted_dates.last }
+
     context 'returns array of patients' do
       it 'when valid parameters passed' do
-        start_date, end_date, disease_name = '25/03/2019'.to_date, '02/04/2019'.to_date, 'Diabetes'
         expect(Patient.patients_attented_for_timespan_for_disease(start_date, end_date, disease_name).count).to eq(1)
       end
 
       it 'when invalid dates passed' do
-        start_date, end_date, disease_name = '', '02/04/2019'.to_date, 'diabetes'
+        start_date = ''
         expect(Patient.patients_attented_for_timespan_for_disease(start_date, end_date, disease_name)).to be_nil
       end
 
       it 'when invalid disease name passed' do
-        start_date, end_date, disease_name = '25/03/2019'.to_date, '02/04/2019'.to_date, 'diabetes'
+        disease_name = 'gzgdhdhtdyhtd'
         expect(Patient.patients_attented_for_timespan_for_disease(start_date, end_date, disease_name)).to eq([])
       end
 
@@ -69,14 +83,18 @@ RSpec.describe Patient, type: :model do
   end
 
   describe '.treatment_for_disease' do
+    let(:appointment) { FactoryBot.create(:appointment) }
+    let(:treatments) { FactoryBot.create(:treatment, appointment_id: appointment.id, disease_id: appointment.disease_id ) }
+    let(:patient) { treatments.appointment.patient }
+    let(:disease_name) { treatments.appointment.disease.name }
+
     context 'returns array of treatments' do
-      patient = Patient.find_by_id(3)
       it 'when valid disease name is present' do
-        expect(patient.treatment_for_disease('Cancer').count).to eq(1)
+        expect(patient.treatment_for_disease(disease_name).count).to eq(1)
       end
 
       it 'when disease name is not present in the database' do
-        expect(patient.treatment_for_disease('cancer')).to eq([])
+        expect(patient.treatment_for_disease('sgtsgds')).to eq([])
       end
 
       it 'when disease name is not present' do
@@ -85,17 +103,21 @@ RSpec.describe Patient, type: :model do
     end
   end
 
-  describe '.treatment_for_disease' do
+  describe '.patients_history' do
+    let(:appointment) { FactoryBot.create(:appointment) }
+    let(:treatments) { FactoryBot.create(:treatment, appointment_id: appointment.id, disease_id: appointment.disease_id ) }
+    let(:patient) { treatments.appointment.patient }
+    let(:disease_name) { treatments.appointment.disease.name }
+
     context 'returns array of patients history based on appointments' do
       it 'when history is present' do
-        patient = Patient.find_by_id(3)
         response = patient.patients_history
-        expect(response.count).to eq(2)
-          expect(response).to be_kind_of(Array)
+        expect(response.count).to eq(1)
+        expect(response).to be_kind_of(Array)
       end
 
       it 'when history is not present' do
-        patient = Patient.find_by_id(2)
+        patient = create(:patient)
         response = patient.patients_history
         expect(response.count).to eq(0)
       end
