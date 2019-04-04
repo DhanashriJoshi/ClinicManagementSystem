@@ -33,7 +33,7 @@ RSpec.describe DiseasesController, type: :controller do
   }
 
   let(:invalid_attributes) {
-    skip("Add a hash of attributes invalid for your model")
+    { name: '', symptons: Faker::Name.name }
   }
 
   # This should return the mi nimal set of values that should be in the session
@@ -102,14 +102,14 @@ RSpec.describe DiseasesController, type: :controller do
   describe "PUT #update" do
     context "with valid params" do
       let(:new_attributes) {
-        skip("Add a hash of attributes valid for your model")
+        {name: "#{valid_attributes[:name]}_update"}
       }
 
       it "updates the requested disease" do
         disease = Disease.create! valid_attributes
         put :update, params: {id: disease.to_param, disease: new_attributes}, session: valid_session
         disease.reload
-        skip("Add assertions for updated state")
+        expect(response).to redirect_to(disease)
       end
 
       it "redirects to the disease" do
