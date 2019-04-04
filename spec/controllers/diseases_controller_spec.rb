@@ -29,17 +29,22 @@ RSpec.describe DiseasesController, type: :controller do
   # Disease. As you add validations to Disease, be sure to
   # adjust the attributes here as well.
   let(:valid_attributes) {
-    skip("Add a hash of attributes valid for your model")
+    { name: Faker::Name.name, symptons: Faker::Name.name }
   }
 
   let(:invalid_attributes) {
     skip("Add a hash of attributes invalid for your model")
   }
 
-  # This should return the minimal set of values that should be in the session
+  # This should return the mi nimal set of values that should be in the session
   # in order to pass any filters (e.g. authentication) defined in
   # DiseasesController. Be sure to keep this updated too.
   let(:valid_session) { {} }
+
+  before :each do
+    # allow(controller).to receive(:valid_attributes).and_return(create(:disease))
+    @disease = Disease.create!({ name: Faker::Name.name, symptons: Faker::Name.name })
+  end
 
   describe "GET #index" do
     it "returns a success response" do
@@ -138,4 +143,24 @@ RSpec.describe DiseasesController, type: :controller do
     end
   end
 
+  describe "#upload" do
+    common_path = "#{Rails.root}/spec/factories"
+    it "responds to html of upload_file" do
+      disease_file_path = "#{common_path}/Diseases_blank_header.xlsx"
+      post :upload, params:{ disease_file: disease_file_path, file_extention: '.xlsx' }
+      expect(response).to redirect_to(upload_file_diseases_path)
+    end
+
+    it "responds to html of diseases_url" do
+      disease_file_path = "#{common_path}/Diseases_new.xlsx"
+      post :upload, params: { disease_file: disease_file_path, file_extention: '.xlsx' }
+      expect(response).to redirect_to(diseases_url)
+    end
+
+    it "responds to xls error file" do
+      disease_file_path = "#{common_path}/Diseases_invalid_data.xlsx"
+      post :upload, params: { disease_file: disease_file_path, file_extention: '.xlsx' }
+      expect(response.content_type).to eq "application/xls"
+    end
+  end
 end

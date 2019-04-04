@@ -63,7 +63,8 @@ class DiseasesController < ApplicationController
 
   def upload
     file = params[:disease_file]
-    success_flag, error_file, notification_message = Disease.import_diseases(file)
+    file_extention = params[:file_extention]
+    success_flag, error_file, notification_message = Disease.import_diseases(file, file_extention)
     if (success_flag && error_file.nil?)
       redirect_to diseases_url, notice: 'Disease was successfully created.'
     elsif (!success_flag && error_file.nil? && notification_message.present?)
