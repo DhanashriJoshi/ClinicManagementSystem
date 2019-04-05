@@ -22,7 +22,7 @@ class Disease < ApplicationRecord
   end
 
   def self.frequently_treated_diseases
-    Disease.joins(:appointments).group('diseases.name').order('count(appointments.id) desc').references(:appointments).count
+    Disease.joins(:appointments).group('diseases.name').having("count(appointments.id) > 0").order('count(appointments.id) desc').references(:appointments).count
   end
 
   def self.import_diseases(file, file_extention=nil)

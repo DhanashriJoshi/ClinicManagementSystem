@@ -101,11 +101,14 @@ RSpec.describe Disease, type: :model do
   describe '.min_age_of_patient_suffering_from_specific_disease' do
     context 'returns minimum age of patient suffering from specific diseases' do
       it 'when valid disease name is present' do
-        expect(Disease.min_age_of_patient_suffering_from_specific_disease('Fatigue')).to eq(31)
+        disease = create(:disease)
+        disease_name = disease.name
+        patients_minimum_age = disease.patients.pluck(:age).min
+        expect(Disease.min_age_of_patient_suffering_from_specific_disease(disease_name)).to eq(patients_minimum_age)
       end
 
       it 'when invalid disease name is present' do
-        expect(Disease.min_age_of_patient_suffering_from_specific_disease('fatigue')).to be_nil
+        expect(Disease.min_age_of_patient_suffering_from_specific_disease('arfasas')).to be_nil
       end
 
       it 'when disease name is not present' do
@@ -115,17 +118,20 @@ RSpec.describe Disease, type: :model do
   end
 
   describe '.doctors_treating_patients_for_given_disease' do
+    let(:appointments) { create_list(:appointment, 3, patient_id: FactoryBot.create(:patient).id, disease_id:  FactoryBot.create(:disease).id) }
+    let(:disease_name) { appointments.first.disease.name }
     context 'returns array of doctors' do
       it 'when valid disease name is present' do
-        expect(Disease.doctors_treating_patients_for_given_disease('Cancer').count).to eq(1)
+        response_count = Disease.find_by_name(disease_name).doctors.count
+        expect(Disease.doctors_treating_patients_for_given_disease(disease_name).count).to eq(response_count)
       end
 
       it 'when disease name is not present in the database' do
-        expect(Disease.min_age_of_patient_suffering_from_specific_disease('fatigue')).to be_nil
+        expect(Disease.doctors_treating_patients_for_given_disease('sgzsgsgsd')).to be_nil
       end
 
       it 'when disease name is not present' do
-        expect(Disease.min_age_of_patient_suffering_from_specific_disease(nil)).to be_nil
+        expect(Disease.doctors_treating_patients_for_given_disease(nil)).to be_nil
       end
     end
   end
@@ -133,8 +139,18 @@ RSpec.describe Disease, type: :model do
   describe '.frequently_treated_diseases' do
     context 'returns hash of Diseases paired with its frequency' do
       it 'when the method is called on class Disease' do
-        resp_hash = {"Cancer"=>3, "Diabetes"=>13, "Fatigue"=>2, "Fever"=>4}
-        expect(Disease.frequently_treated_diseases).to eq(resp_hash)
+        # resp_hash = {"Cancer"=>3, "Diabetes"=>13, "Fatigue"=>2, "Fever"=>4}
+        disease = FactoryBot.create(:disease)
+        disease_id = disease.id
+        create(:appointment)
+        create(:appointment, disease_id: disease_id)
+        create(:appointment, disease_id: disease_id)
+        response = Disease.frequently_treated_diseases
+        expect(response).to be_kind_of(Hash)
+        expect(response).to have_key(disease.name)
+        response.each do |key, value|
+          expect(value).not_to be_zero
+        end
       end
     end
   end
